@@ -1,24 +1,26 @@
 import axios from "axios";
-import {FixedSizeNodeData, FixedSizeNodePublicState, FixedSizeTree as VTree, TreeWalkerValue} from 'react-vtree';
 import AutoSizer from "react-virtualized-auto-sizer"
-import {createContext, Dispatch, FC, SetStateAction, useCallback, useContext, useState} from "react";
-import {NodeComponentProps} from "react-vtree/dist/es/Tree";
-import {IconButton, Menu, MenuItem} from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import {IconButton, Menu, MenuItem} from "@mui/material";
+import {NodeComponentProps} from "react-vtree/dist/es/Tree";
+import {FixedSizeNodeData, FixedSizeNodePublicState, FixedSizeTree as VTree, TreeWalkerValue} from 'react-vtree';
+import {createContext, Dispatch, FC, MouseEvent, SetStateAction, useCallback, useContext, useState} from "react";
 
 const findAnd = require('find-and')
 
 type TypeNode = 'folder' | 'lesson'
 
 export const $instance = axios.create({
-    baseURL: process.env.REACT_APP_API_HOST
+    baseURL: process.env.REACT_APP_API_HOST,
+    headers: {'Authorization': `Bearer ${process.env.REACT_APP_TOKEN}`}
 })
 
 type TreeNode = Readonly<{
     id: string;
     title: string;
     type: TypeNode;
-    children: TreeNode[];
+    position?: number;
+    children?: TreeNode[];
 }>;
 
 type TreeData = FixedSizeNodeData & Readonly<{
@@ -69,15 +71,13 @@ const Node: FC<NodeComponentProps<TreeData, FixedSizeNodePublicState<TreeData>>>
     const {state, setState} = useContext<TreeContextProps<TreeNode>>(TreeContext)
 
     const handleClick = async (id: string) => {
-        const response = await $instance.get(`folders/${id}`, {
-            headers: {'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijc3NTM5NWE2LWQyZDgtNDdmMC1hYjRlLTFhNTU2ODk5MDVjZiIsImVtYWlsIjoiaXZhbkBtYWlsLnJ1IiwidXNlclJvbGUiOiJ0ZWFjaGVyIiwiYnJvd3NlclVzZXIiOiJQb3N0bWFuUnVudGltZS83LjMwLjEiLCJpYXQiOjE2NzU0MDUxOTEsImV4cCI6MTY3NTQ5MTU5MX0.wrWEeNNzXcmeB9dC1ZSVHoSsWDlB1fBSpC89i5229UM`}
-        })
+        const response = await $instance.get(`folders/${id}`)
 
         setState((prevState) => findAnd.appendProps(prevState, {id: id}, response.data))
     }
     const [anchorTemplate, setAnchorTemplate] = useState<null | HTMLElement>(null);
 
-    const handleClickTemplate = (event: React.MouseEvent<HTMLElement>) => {
+    const handleClickTemplate = (event: MouseEvent<HTMLButtonElement>) => {
         setAnchorTemplate(event.currentTarget);
     };
     const handleCloseTemplate = () => {
@@ -101,11 +101,9 @@ const Node: FC<NodeComponentProps<TreeData, FixedSizeNodePublicState<TreeData>>>
             </div>)}
         <div>{id} {title}</div>
         {type === 'folder' && <button onClick={async () => {
-            const response = await $instance.put(`folders/${id}`, {title: (Math.random() + 1).toString(36).substring(2)}, {
-                headers: {'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijc3NTM5NWE2LWQyZDgtNDdmMC1hYjRlLTFhNTU2ODk5MDVjZiIsImVtYWlsIjoiaXZhbkBtYWlsLnJ1IiwidXNlclJvbGUiOiJ0ZWFjaGVyIiwiYnJvd3NlclVzZXIiOiJQb3N0bWFuUnVudGltZS83LjMwLjEiLCJpYXQiOjE2NzU0MDUxOTEsImV4cCI6MTY3NTQ5MTU5MX0.wrWEeNNzXcmeB9dC1ZSVHoSsWDlB1fBSpC89i5229UM`}
-            })
+            // const response = await $instance.put(`folders/${id}`, {title: (Math.random() + 1).toString(36).substring(2)})
 
-            setState((prevState) => findAnd.changeProps(prevState, {id: id}, {title: response.data.title}))
+            setState((prevState) => findAnd.changeProps(prevState, {id: id}, {title: Math.random().toString()}))
         }}>rename</button>}
         <div>
             <IconButton disableFocusRipple
@@ -158,19 +156,74 @@ export default function App() {
     //     console.log(JSON.stringify(state, undefined, 4))
     // }, [state])
 
+    const handleSort = () => {
+        setState((prevState) => findAnd.changeProps(prevState, {id: '1'}, {
+            children: [
+                {
+                    id: '11',
+                    title: '1',
+                    position: 1,
+                    type: "folder"
+                }, {
+                    id: '12',
+                    title: '2',
+                    position: 2,
+                    type: "folder"
+                }, {
+                    id: '13',
+                    title: '3',
+                    position: 3,
+                    type: "folder"
+                }
+            ]
+        }))
+    }
+
     const handleClick = async () => {
-        const response = await $instance.get('folders', {
-            headers: {'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijc3NTM5NWE2LWQyZDgtNDdmMC1hYjRlLTFhNTU2ODk5MDVjZiIsImVtYWlsIjoiaXZhbkBtYWlsLnJ1IiwidXNlclJvbGUiOiJ0ZWFjaGVyIiwiYnJvd3NlclVzZXIiOiJQb3N0bWFuUnVudGltZS83LjMwLjEiLCJpYXQiOjE2NzU0MDUxOTEsImV4cCI6MTY3NTQ5MTU5MX0.wrWEeNNzXcmeB9dC1ZSVHoSsWDlB1fBSpC89i5229UM`}
+        const response = await $instance.get('folders')
+        const data: TreeNode[] = [
+            {
+                id: '1',
+                type: "folder",
+                title: Math.random().toString(),
+                children: [
+                    {
+                        id: '11',
+                        title: '1',
+                        position: 1,
+                        type: "folder"
+                    }, {
+                        id: '13',
+                        title: '3',
+                        position: 3,
+                        type: "folder"
+                    }, {
+                        id: '12',
+                        title: '2',
+                        position: 2,
+                        type: "folder"
+                    }
+                ]
+            }, {
+                id: '2',
+                type: "folder",
+                title: Math.random().toString()
+            }]
+        const temp: TreeNode[] = [...Array(10000)].map(() => {
+            return {id: Math.random().toString(), title: Math.random().toString(), type: 'folder'}
         })
 
-        return setState(response.data.concat([...Array(100)].map(() => {
-            return {id: Math.random().toString()}
-        })))
+        setState(data.concat(temp))
+
+        // return setState(response.data.concat([...Array(100)].map(() => {
+        //     return {id: Math.random().toString()}
+        // })))
     }
 
     return (
         <div style={{height: '100%', width: '100%', display: 'flex'}}>
             <button onClick={handleClick}>click</button>
+            <button onClick={handleSort}>sort</button>
             <TreeContext.Provider value={{state, setState}}>
                 <AutoSizer disableWidth style={{height: 'inherit', flex: 1}}>
                     {({height}: any) => (!!state.length && <VTree async
