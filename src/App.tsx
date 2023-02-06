@@ -1,10 +1,12 @@
 import axios from "axios";
 import AutoSizer from "react-virtualized-auto-sizer"
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import {IconButton, Menu, MenuItem} from "@mui/material";
+import {IconButton, Menu, MenuItem, Typography} from "@mui/material";
 import {NodeComponentProps} from "react-vtree/dist/es/Tree";
 import {FixedSizeNodeData, FixedSizeNodePublicState, FixedSizeTree as VTree, TreeWalkerValue} from 'react-vtree';
 import {createContext, Dispatch, FC, MouseEvent, SetStateAction, useCallback, useContext, useState} from "react";
+import styled from "styled-components";
+import TooltipTemplate from "./TooltipTemplate";
 
 const findAnd = require('find-and')
 
@@ -85,49 +87,58 @@ const Node: FC<NodeComponentProps<TreeData, FixedSizeNodePublicState<TreeData>>>
     };
 
 
-    return (<div style={{
-        ...style,
-        alignItems: "center",
-        display: "flex",
-        boxSizing: 'border-box',
-        paddingLeft: nestingLevel * 30 + (isLeaf ? 48 : 0)
-    }}>
-        {(!isLeaf && type === 'folder') && (
-            <div>
-                <button type="button" onClick={() => {
-                    handleClick(id);
-                    setOpen(!isOpen)
-                }}>{isOpen ? "-" : "+"}</button>
-            </div>)}
-        <div>{id} {title}</div>
-        {type === 'folder' && <button onClick={async () => {
-            // const response = await $instance.put(`folders/${id}`, {title: (Math.random() + 1).toString(36).substring(2)})
+    return (
+        <TooltipTemplate content={<Typography>Но высококачественный прототип будущего проекта предоставляет
+            широкие возможности для как самодостаточных, так и внешне зависимых концептуальных
+            решений. Вот вам яркий пример современных тенденций — реализация намеченных
+            плановых заданий напрямую зависит от экспериментов, поражающих по своей
+            масштабности и грандиозности. Ясность нашей позиции очевидна: реализация намеченных
+            плановых заданий является качественно новой ступенью глубокомысленных
+            рассуждений</Typography>}>
+            <div style={{
+                ...style,
+                alignItems: "center",
+                display: "flex",
+                boxSizing: 'border-box',
+                paddingLeft: nestingLevel * 30 + (isLeaf ? 48 : 0)
+            }}>
+                {(!isLeaf && type === 'folder') && (
+                    <div>
+                        <button type="button" onClick={() => {
+                            handleClick(id);
+                            setOpen(!isOpen)
+                        }}>{isOpen ? "-" : "+"}</button>
+                    </div>)}
+                <div>{id} {title}</div>
+                {type === 'folder' && <button onClick={async () => {
+                    // const response = await $instance.put(`folders/${id}`, {title: (Math.random() + 1).toString(36).substring(2)})
 
-            setState((prevState) => findAnd.changeProps(prevState, {id: id}, {title: Math.random().toString()}))
-        }}>rename</button>}
-        <div>
-            <IconButton disableFocusRipple
-                        aria-haspopup='menu'
-                        sx={{color: '#8C63A9'}}
-                        aria-controls={id}
-                        onClickCapture={handleClickTemplate}>
-                <MoreVertIcon sx={{color: '#0000008A'}}/>
-            </IconButton>
-            <Menu keepMounted
-                  id={id + 1}
-                  onClose={handleCloseTemplate}
-                  anchorEl={anchorTemplate} open={!!anchorTemplate}
-                  sx={{'&>.MuiMenu-paper': {width: '350px'}}}
-                  anchorOrigin={{vertical: 'top', horizontal: 'right'}}
-                  transformOrigin={{vertical: 8, horizontal: 'left'}}
-                  MenuListProps={{onMouseLeave: handleCloseTemplate}}
-            ><MenuItem onClickCapture={() => {
-                handleCloseTemplate();
-            }} sx={{height: '46px', padding: 0}}>
-            </MenuItem>
-            </Menu>
-        </div>
-    </div>)
+                    setState((prevState) => findAnd.changeProps(prevState, {id: id}, {title: Math.random().toString()}))
+                }}>rename</button>}
+                <div>
+                    <IconButton disableFocusRipple
+                                aria-haspopup='menu'
+                                sx={{color: '#8C63A9'}}
+                                aria-controls={id}
+                                onClickCapture={handleClickTemplate}>
+                        <MoreVertIcon sx={{color: '#0000008A'}}/>
+                    </IconButton>
+                    <Menu keepMounted
+                          id={id + 1}
+                          onClose={handleCloseTemplate}
+                          anchorEl={anchorTemplate} open={!!anchorTemplate}
+                          sx={{'&>.MuiMenu-paper': {width: '350px'}}}
+                          anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+                          transformOrigin={{vertical: 8, horizontal: 'left'}}
+                          MenuListProps={{onMouseLeave: handleCloseTemplate}}
+                    ><MenuItem onClickCapture={() => {
+                        handleCloseTemplate();
+                    }} sx={{height: '46px', padding: 0}}>
+                    </MenuItem>
+                    </Menu>
+                </div>
+            </div>
+        </TooltipTemplate>)
 };
 export default function App() {
     const [state, setState] = useState<TreeNode[]>([])
@@ -209,7 +220,7 @@ export default function App() {
                 type: "folder",
                 title: Math.random().toString()
             }]
-        const temp: TreeNode[] = [...Array(10000)].map(() => {
+        const temp: TreeNode[] = [...Array(10)].map(() => {
             return {id: Math.random().toString(), title: Math.random().toString(), type: 'folder'}
         })
 
@@ -226,13 +237,36 @@ export default function App() {
             <button onClick={handleSort}>sort</button>
             <TreeContext.Provider value={{state, setState}}>
                 <AutoSizer disableWidth style={{height: 'inherit', flex: 1}}>
-                    {({height}: any) => (!!state.length && <VTree async
-                                                                  width="100%"
-                                                                  itemSize={64}
-                                                                  height={height}
-                                                                  treeWalker={treeWalker}>{Node}</VTree>)}
+                    {({height}: any) => (!!state.length && <DenisDeb>
+                        <VTree async
+                               width="100%"
+                               itemSize={64}
+                               height={height}
+                               className={'vtree'}
+                               treeWalker={treeWalker}>{Node}</VTree>
+                    </DenisDeb>)}
                 </AutoSizer>
             </TreeContext.Provider>
         </div>
     )
 }
+
+
+const DenisDeb = styled('div')`
+  .vtree {
+    width: 500px !important;
+    scrollbar-gutter: stable;
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      border-radius: 50%;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      border-radius: 1000px;
+      background-color: #C0C0C0;
+      background-clip: padding-box;
+      border: 1px solid rgba(0, 0, 0, 0);
+    }
+  }
+`
