@@ -88,57 +88,57 @@ const Node: FC<NodeComponentProps<TreeData, FixedSizeNodePublicState<TreeData>>>
 
 
     return (
-        <TooltipTemplate content={<Typography>Но высококачественный прототип будущего проекта предоставляет
-            широкие возможности для как самодостаточных, так и внешне зависимых концептуальных
-            решений. Вот вам яркий пример современных тенденций — реализация намеченных
-            плановых заданий напрямую зависит от экспериментов, поражающих по своей
-            масштабности и грандиозности. Ясность нашей позиции очевидна: реализация намеченных
-            плановых заданий является качественно новой ступенью глубокомысленных
-            рассуждений</Typography>}>
-            <div style={{
-                ...style,
-                alignItems: "center",
-                display: "flex",
-                boxSizing: 'border-box',
-                paddingLeft: nestingLevel * 30 + (isLeaf ? 48 : 0)
-            }}>
-                {(!isLeaf && type === 'folder') && (
-                    <div>
-                        <button type="button" onClick={() => {
-                            handleClick(id);
-                            setOpen(!isOpen)
-                        }}>{isOpen ? "-" : "+"}</button>
-                    </div>)}
-                <div>{id} {title}</div>
-                {type === 'folder' && <button onClick={async () => {
-                    // const response = await $instance.put(`folders/${id}`, {title: (Math.random() + 1).toString(36).substring(2)})
-
-                    setState((prevState) => findAnd.changeProps(prevState, {id: id}, {title: Math.random().toString()}))
-                }}>rename</button>}
+        <div style={{
+            ...style,
+            alignItems: "center",
+            display: "flex",
+            boxSizing: 'border-box',
+            paddingLeft: nestingLevel * 30 + (isLeaf ? 48 : 0)
+        }}>
+            {(!isLeaf && type === 'folder') && (
                 <div>
-                    <IconButton disableFocusRipple
-                                aria-haspopup='menu'
-                                sx={{color: '#8C63A9'}}
-                                aria-controls={id}
-                                onClickCapture={handleClickTemplate}>
-                        <MoreVertIcon sx={{color: '#0000008A'}}/>
-                    </IconButton>
-                    <Menu keepMounted
-                          id={id + 1}
-                          onClose={handleCloseTemplate}
-                          anchorEl={anchorTemplate} open={!!anchorTemplate}
-                          sx={{'&>.MuiMenu-paper': {width: '350px'}}}
-                          anchorOrigin={{vertical: 'top', horizontal: 'right'}}
-                          transformOrigin={{vertical: 8, horizontal: 'left'}}
-                          MenuListProps={{onMouseLeave: handleCloseTemplate}}
-                    ><MenuItem onClickCapture={() => {
-                        handleCloseTemplate();
-                    }} sx={{height: '46px', padding: 0}}>
-                    </MenuItem>
-                    </Menu>
-                </div>
+                    <button type="button" onClick={() => {
+                        handleClick(id);
+                        setOpen(!isOpen)
+                    }}>{isOpen ? "-" : "+"}</button>
+                </div>)}
+            <TooltipTemplate content={<Typography>Но высококачественный прототип будущего проекта предоставляет
+                широкие возможности для как самодостаточных, так и внешне зависимых концептуальных
+                решений. Вот вам яркий пример современных тенденций — реализация намеченных
+                плановых заданий напрямую зависит от экспериментов, поражающих по своей
+                масштабности и грандиозности. Ясность нашей позиции очевидна: реализация намеченных
+                плановых заданий является качественно новой ступенью глубокомысленных
+                рассуждений</Typography>}>
+                <div>{id} {title}</div>
+            </TooltipTemplate>
+            {type === 'folder' && <button onClick={async () => {
+                // const response = await $instance.put(`folders/${id}`, {title: (Math.random() + 1).toString(36).substring(2)})
+
+                setState((prevState) => findAnd.changeProps(prevState, {id: id}, {title: Math.random().toString()}))
+            }}>rename</button>}
+            <div>
+                <IconButton disableFocusRipple
+                            aria-haspopup='menu'
+                            sx={{color: '#8C63A9'}}
+                            aria-controls={id}
+                            onClickCapture={handleClickTemplate}>
+                    <MoreVertIcon sx={{color: '#0000008A'}}/>
+                </IconButton>
+                <Menu keepMounted
+                      id={id + 1}
+                      onClose={handleCloseTemplate}
+                      anchorEl={anchorTemplate} open={!!anchorTemplate}
+                      sx={{'&>.MuiMenu-paper': {width: '350px'}}}
+                      anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+                      transformOrigin={{vertical: 8, horizontal: 'left'}}
+                      MenuListProps={{onMouseLeave: handleCloseTemplate}}
+                ><MenuItem onClickCapture={() => {
+                    handleCloseTemplate();
+                }} sx={{height: '46px', padding: 0}}>
+                </MenuItem>
+                </Menu>
             </div>
-        </TooltipTemplate>)
+        </div>)
 };
 export default function App() {
     const [state, setState] = useState<TreeNode[]>([])

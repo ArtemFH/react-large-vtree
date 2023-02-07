@@ -13,7 +13,8 @@
     "react-vtree": "^3.0.0-beta.3",
     "react-window": "^1.8.8",
     "styled-components": "^5.3.6",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "vite": "^4.1.1"
   },
   "scripts": {
     "start": "react-scripts start",
