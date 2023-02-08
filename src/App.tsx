@@ -1,21 +1,16 @@
-import axios from "axios";
 import AutoSizer from "react-virtualized-auto-sizer"
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {IconButton, Menu, MenuItem, Typography} from "@mui/material";
 import {NodeComponentProps} from "react-vtree/dist/es/Tree";
 import {FixedSizeNodeData, FixedSizeNodePublicState, FixedSizeTree as VTree, TreeWalkerValue} from 'react-vtree';
-import {createContext, Dispatch, FC, MouseEvent, SetStateAction, useCallback, useContext, useState} from "react";
+import {Dispatch, FC, MouseEvent, SetStateAction, useCallback, useState} from "react";
 import styled from "styled-components";
 import TooltipTemplate from "./TooltipTemplate";
+import {useAppActions, useAppSelector} from "./hooks/redux";
 
 const findAnd = require('find-and')
 
 type TypeNode = 'folder' | 'lesson'
-
-export const $instance = axios.create({
-    baseURL: process.env.REACT_APP_API_HOST,
-    headers: {'Authorization': `Bearer ${process.env.REACT_APP_TOKEN}`}
-})
 
 type TreeNode = Readonly<{
     id: string;
@@ -42,11 +37,6 @@ export type TreeContextProps<Type> = {
     setState: Dispatch<SetStateAction<Type[]>>
 }
 
-const TreeContext = createContext<TreeContextProps<TreeNode>>({
-    state: [],
-    setState: () => undefined
-})
-
 const getNodeData = (node: TreeNode, nestingLevel: number): TreeWalkerValue<TreeData, NodeMeta> => ({
     data: {
         id: node.id,
@@ -68,15 +58,16 @@ const Node: FC<NodeComponentProps<TreeData, FixedSizeNodePublicState<TreeData>>>
                                                                                             type,
                                                                                             nestingLevel
                                                                                         },
-                                                                                        isOpen, style, setOpen
+                                                                                        isOpen, style, setOpen, treeData
                                                                                     }) => {
-    const {state, setState} = useContext<TreeContextProps<TreeNode>>(TreeContext)
-
-    const handleClick = async (id: string) => {
-        const response = await $instance.get(`folders/${id}`)
-
-        setState((prevState) => findAnd.appendProps(prevState, {id: id}, response.data))
+    const {getPersonalFolderByParentId} = useAppActions()
+    const {materialMy} = useAppSelector(state => state.personalMaterials)
+    console.log('tree', treeData)
+    const handleClick = (id: string) => {
+        if (!findAnd.returnFound(materialMy, {id: id}).children) return getPersonalFolderByParentId(id)
+        else return null
     }
+
     const [anchorTemplate, setAnchorTemplate] = useState<null | HTMLElement>(null);
 
     const handleClickTemplate = (event: MouseEvent<HTMLButtonElement>) => {
@@ -93,13 +84,13 @@ const Node: FC<NodeComponentProps<TreeData, FixedSizeNodePublicState<TreeData>>>
             alignItems: "center",
             display: "flex",
             boxSizing: 'border-box',
-            paddingLeft: nestingLevel * 30 + (isLeaf ? 48 : 0)
+            paddingLeft: nestingLevel * 8 + (isLeaf ? 48 : 0)
         }}>
             {(!isLeaf && type === 'folder') && (
                 <div>
-                    <button type="button" onClick={() => {
-                        handleClick(id);
-                        setOpen(!isOpen)
+                    <button type="button" onClick={async () => {
+                        await handleClick(id);
+                        await setOpen(!isOpen)
                     }}>{isOpen ? "-" : "+"}</button>
                 </div>)}
             <TooltipTemplate content={<Typography>Но высококачественный прототип будущего проекта предоставляет
@@ -109,12 +100,12 @@ const Node: FC<NodeComponentProps<TreeData, FixedSizeNodePublicState<TreeData>>>
                 масштабности и грандиозности. Ясность нашей позиции очевидна: реализация намеченных
                 плановых заданий является качественно новой ступенью глубокомысленных
                 рассуждений</Typography>}>
-                <div>{id} {title}</div>
+                <Typography noWrap>{id} {title}</Typography>
             </TooltipTemplate>
             {type === 'folder' && <button onClick={async () => {
                 // const response = await $instance.put(`folders/${id}`, {title: (Math.random() + 1).toString(36).substring(2)})
 
-                setState((prevState) => findAnd.changeProps(prevState, {id: id}, {title: Math.random().toString()}))
+                // setState((prevState) => findAnd.changeProps(prevState, {id: id}, {title: Math.random().toString()}))
             }}>rename</button>}
             <div>
                 <IconButton disableFocusRipple
@@ -141,10 +132,12 @@ const Node: FC<NodeComponentProps<TreeData, FixedSizeNodePublicState<TreeData>>>
         </div>)
 };
 export default function App() {
-    const [state, setState] = useState<TreeNode[]>([])
+    const {getPersonalRootFolders} = useAppActions()
+    const {materialMy} = useAppSelector(state => state.personalMaterials)
+
     const treeWalker = useCallback(function* treeWalker(): any {
-        for (let i = 0; i < state.length; i++) {
-            yield getNodeData(state[i], 0);
+        for (let i = 0; i < materialMy.length; i++) {
+            yield getNodeData(materialMy[i], 0);
         }
 
         while (true) {
@@ -153,7 +146,7 @@ export default function App() {
                 yield getNodeData(parent.node.children[i], parent.nestingLevel + 1);
             }
         }
-    }, [state]);
+    }, [materialMy]);
 
     // const handleClick = () => {
     //     setState((prev: any) => {
@@ -167,86 +160,26 @@ export default function App() {
     //     console.log(JSON.stringify(state, undefined, 4))
     // }, [state])
 
-    const handleSort = () => {
-        setState((prevState) => findAnd.changeProps(prevState, {id: '1'}, {
-            children: [
-                {
-                    id: '11',
-                    title: '1',
-                    position: 1,
-                    type: "folder"
-                }, {
-                    id: '12',
-                    title: '2',
-                    position: 2,
-                    type: "folder"
-                }, {
-                    id: '13',
-                    title: '3',
-                    position: 3,
-                    type: "folder"
-                }
-            ]
-        }))
-    }
-
-    const handleClick = async () => {
-        const response = await $instance.get('folders')
-        const data: TreeNode[] = [
-            {
-                id: '1',
-                type: "folder",
-                title: Math.random().toString(),
-                children: [
-                    {
-                        id: '11',
-                        title: '1',
-                        position: 1,
-                        type: "folder"
-                    }, {
-                        id: '13',
-                        title: '3',
-                        position: 3,
-                        type: "folder"
-                    }, {
-                        id: '12',
-                        title: '2',
-                        position: 2,
-                        type: "folder"
-                    }
-                ]
-            }, {
-                id: '2',
-                type: "folder",
-                title: Math.random().toString()
-            }]
-        const temp: TreeNode[] = [...Array(10)].map(() => {
-            return {id: Math.random().toString(), title: Math.random().toString(), type: 'folder'}
-        })
-
-        setState(data.concat(temp))
-
-        // return setState(response.data.concat([...Array(100)].map(() => {
-        //     return {id: Math.random().toString()}
-        // })))
+    const handleClick = () => {
+        if (!materialMy.length) return getPersonalRootFolders()
+        else return null
     }
 
     return (
         <div style={{height: '100%', width: '100%', display: 'flex'}}>
-            <button onClick={handleClick}>click</button>
-            <button onClick={handleSort}>sort</button>
-            <TreeContext.Provider value={{state, setState}}>
-                <AutoSizer disableWidth style={{height: 'inherit', flex: 1}}>
-                    {({height}: any) => (!!state.length && <DenisDeb>
-                        <VTree async
-                               width="100%"
-                               itemSize={64}
-                               height={height}
-                               className={'vtree'}
-                               treeWalker={treeWalker}>{Node}</VTree>
-                    </DenisDeb>)}
-                </AutoSizer>
-            </TreeContext.Provider>
+            <button onClick={async () => await handleClick()}>
+                click
+            </button>
+            <AutoSizer disableWidth style={{height: 'inherit', flex: 1}}>
+                {({height}: any) => (!!materialMy.length && <DenisDeb>
+                    <VTree async
+                           width="100%"
+                           itemSize={64}
+                           height={height}
+                           className={'vtree'}
+                           treeWalker={treeWalker}>{Node}</VTree>
+                </DenisDeb>)}
+            </AutoSizer>
         </div>
     )
 }
@@ -254,8 +187,14 @@ export default function App() {
 
 const DenisDeb = styled('div')`
   .vtree {
-    width: 500px !important;
+    width: 300px !important;
     scrollbar-gutter: stable;
+
+    &:hover {
+      ::-webkit-scrollbar-thumb {
+        background-color: #C0C0C0;
+      }
+    }
 
     ::-webkit-scrollbar {
       width: 8px;
@@ -264,9 +203,10 @@ const DenisDeb = styled('div')`
 
     ::-webkit-scrollbar-thumb {
       border-radius: 1000px;
-      background-color: #C0C0C0;
+      background-color: transparent;
       background-clip: padding-box;
       border: 1px solid rgba(0, 0, 0, 0);
+      transition: background-color .3s ease;
     }
   }
 `

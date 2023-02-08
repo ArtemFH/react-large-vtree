@@ -1,4 +1,4 @@
-import React, {cloneElement, FC} from 'react';
+import {cloneElement, FC} from 'react';
 import {Tooltip} from "@mui/material";
 
 const TooltipTemplate: FC<{ content: JSX.Element, children: JSX.Element }> = ({
